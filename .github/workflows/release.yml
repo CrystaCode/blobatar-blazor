@@ -1,0 +1,76 @@
+name: Release
+
+# Publishes both packages to NuGet.org when a version tag is pushed:
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# The tag is the version. It has to agree with <VersionPrefix> in Directory.Build.props (a prerelease
+# tag such as v0.2.0-preview.1 agrees with 0.2.0), so the repository and the package never disagree
+# about what was shipped. Needs one repository secret, NUGET_API_KEY: an API key from nuget.org with
+# the Push permission, scoped to the glob "Blobatar*".
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # to create the GitHub release
+
+jobs:
+  publish:
+    name: Publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Read the version from the tag
+        id: version
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          prefix="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' Directory.Build.props)"
+          if [ -z "$prefix" ]; then
+            echo "::error::Could not read <VersionPrefix> from Directory.Build.props."
+            exit 1
+          fi
+          if [ "${version%%-*}" != "$prefix" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME is version $version, but Directory.Build.props says <VersionPrefix>$prefix</VersionPrefix>. Bump the prefix (or fix the tag) first."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          case "$version" in
+            *-*) echo "prerelease=--prerelease" >> "$GITHUB_OUTPUT" ;;
+            *)   echo "prerelease=" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release -p:Version=${{ steps.version.outputs.version }}
+      # The network tests compare against the deployed blobatar.dev; CI already runs them, and a release
+      # should not depend on a third-party site being up.
+      - run: dotnet test --no-build -c Release --filter "Category!=Network"
+      - run: dotnet pack src/Blobatar/Blobatar.csproj --no-build -c Release -p:Version=${{ steps.version.outputs.version }} -o artifacts
+      - run: dotnet pack src/Blobatar.Blazor/Blobatar.Blazor.csproj --no-build -c Release -p:Version=${{ steps.version.outputs.version }} -o artifacts
+
+      - name: Push to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::error::The NUGET_API_KEY repository secret is not set."
+            exit 1
+          fi
+          # Core first: Blobatar.Blazor depends on Blobatar at the same version. The .snupkg beside each
+          # package is pushed with it. --skip-duplicate makes a re-run of a half-finished release harmless.
+          dotnet nuget push "artifacts/Blobatar.$VERSION.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push "artifacts/Blobatar.Blazor.$VERSION.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" artifacts/*.nupkg artifacts/*.snupkg
+          --title "$GITHUB_REF_NAME" --generate-notes ${{ steps.version.outputs.prerelease }}
