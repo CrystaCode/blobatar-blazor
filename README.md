@@ -142,6 +142,19 @@ dotnet run --project samples/Blobatar.Demo
 dotnet test --filter Category=Network     # opt-in: compares against the deployed blobatar.dev endpoint
 ```
 
+### Releasing
+
+Releases are cut from tags. Bump `<VersionPrefix>` in `Directory.Build.props`, merge, then tag the merge commit:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+[`release.yml`](.github/workflows/release.yml) builds and tests on the tag, packs both packages with the tag's version (a `v0.2.0-preview.1` tag gives a prerelease), pushes them to NuGet.org and attaches them to a GitHub release. It refuses a tag whose version does not match `VersionPrefix`, so the repository and the package never disagree about what was shipped.
+
+One-time setup: create an API key on [nuget.org](https://www.nuget.org/account/apikeys) with the *Push* permission, scoped to the glob `Blobatar*`, and store it as the `NUGET_API_KEY` repository secret (Settings → Secrets and variables → Actions).
+
 ## Credits and license
 
 MIT. The algorithm, the stylesheets, the gaze driver and the fixtures are the work of [Alain](https://github.com/Alain00) and are used under the MIT License; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). This port tracks upstream 2.8.0 (generation 2).
