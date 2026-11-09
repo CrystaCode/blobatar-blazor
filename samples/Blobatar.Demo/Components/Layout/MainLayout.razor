@@ -1,0 +1,26 @@
+﻿@inherits LayoutComponentBase
+
+<header class="site-nav">
+    <a class="brand" href="/">blobatar <span>for Blazor</span></a>
+    <nav>
+        <NavLink href="/" Match="NavLinkMatch.All">Crowd</NavLink>
+        <NavLink href="/expressions">Expressions</NavLink>
+        <NavLink href="/editor">Editor</NavLink>
+        <NavLink href="/gaze">Gaze</NavLink>
+        <a href="https://blobatar.dev" target="_blank" rel="noreferrer">blobatar.dev</a>
+    </nav>
+</header>
+
+<main class="page">
+    @Body
+</main>
+
+<footer class="site-footer">
+    MIT licensed. A C# port of <a href="https://github.com/Alain00/blobatar">blobatar</a> by Alain, byte-identical to the original.
+</footer>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

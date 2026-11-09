@@ -1,0 +1,47 @@
+@page "/expressions"
+
+<PageTitle>Expressions</PageTitle>
+
+<h1>Expressions</h1>
+<p class="lede">A pose the blobatar holds until you change it. Fourteen of them, each separated from its nearest neighbour by three channels, never by tint alone.</p>
+
+<p class="find">
+    <span>name</span>
+    <input class="name-input" @bind="name" @bind:event="oninput" spellcheck="false" />
+</p>
+
+<div class="poses">
+    @foreach (var e in Enum.GetValues<BlobatarExpression>())
+    {
+        <figure class="pose" @onclick="() => selected = e">
+            <Blobatar Name="@Name" Size="72" Expression="e" Title="@e.ToName()" />
+            <figcaption>@e.ToName()</figcaption>
+        </figure>
+    }
+</div>
+
+<section class="morph">
+    <div class="morph-face">
+        <Blobatar Name="@Name" Size="220" Animate="BlobatarAnimation.Always" Expression="selected" Title="@Name" />
+    </div>
+    <div class="morph-controls">
+        <h2>The morph</h2>
+        <p class="muted">With <code>Animate</code> on, the pose travels as CSS custom properties and the stylesheet transitions between any two poses. Pick one, or click a tile above.</p>
+        <select @bind="selected">
+            @foreach (var e in Enum.GetValues<BlobatarExpression>())
+            {
+                <option value="@e">@e.ToName()</option>
+            }
+        </select>
+        <pre class="snippet">&lt;Blobatar Name="@Name" Size="220"
+          Animate="BlobatarAnimation.Always"
+          Expression="BlobatarExpression.@selected" /&gt;</pre>
+    </div>
+</section>
+
+@code {
+    private string name = "Crysta";
+    private BlobatarExpression selected = BlobatarExpression.Happy;
+
+    private string Name => string.IsNullOrWhiteSpace(name) ? "Crysta" : name;
+}

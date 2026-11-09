@@ -1,0 +1,14 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Documentation generation is on only because the unused-usings rule (IDE0005) requires it; the missing-comment warning is silenced. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Test code reads better without the public-API analyzers. -->
+    <NoWarn>$(NoWarn);CS1591;CA1515;CA1861;CA2007;CA1303;CA1307;CA1305;CA1310;CA1304;CA1308;CA1819;CA1024;CA1034;CA1711;CA1822;CA1849;CA2201;CA5351;xUnit1004</NoWarn>
+  </PropertyGroup>
+
+</Project>

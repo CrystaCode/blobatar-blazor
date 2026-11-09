@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/Blobatar.Demo/Blobatar.Demo.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Blobatar.Blazor/Blobatar.Blazor.csproj" />
+    <Project Path="src/Blobatar/Blobatar.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Blobatar.Blazor.Tests/Blobatar.Blazor.Tests.csproj" />
+    <Project Path="tests/Blobatar.Tests/Blobatar.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,66 @@
+@page "/gaze"
+
+<PageTitle>Gaze</PageTitle>
+
+<h1>Gaze</h1>
+<p class="lede">The one motion layer that needs JavaScript: the eyes follow a pointer, a point, or an element. Attached with the <code>Gaze</code> parameter; aimed with <code>LookAtAsync</code>.</p>
+
+<div class="gaze">
+    <div class="gaze-face">
+        <Blobatar @ref="hero" Name="@Name" Size="260" Animate="BlobatarAnimation.Always" Title="@Name" Gaze="HeroGaze" />
+    </div>
+    <div class="gaze-controls">
+        <label class="field"><span>name</span><input @bind="name" @bind:event="oninput" spellcheck="false" /></label>
+
+        <div class="field">
+            <span>look at</span>
+            <div class="chips">
+                <button class="chip @(aim == "pointer" ? "on" : null)" @onclick="@(() => Aim(GazeTarget.Pointer, "pointer"))">the pointer</button>
+                <button class="chip @(aim == "rest" ? "on" : null)" @onclick="@(() => Aim(GazeTarget.Rest, "rest"))">rest</button>
+                <button class="chip @(aim == "none" ? "on" : null)" @onclick="@(() => Aim(GazeTarget.None, "none"))">nothing</button>
+                <button class="chip @(aim == "button" ? "on" : null)" @ref="button" @onclick="@(() => Aim(new GazeElement(button), "button"))">this button</button>
+            </div>
+        </div>
+
+        <label class="field">
+            <span>a password-field trick: it watches the field while you type and looks away on blur</span>
+            <input @onfocus="WatchField" @onblur="@(() => Aim(GazeTarget.Rest, "rest"))" @ref="field" placeholder="type here" />
+        </label>
+
+        <label class="field slider">
+            <span>travel <em>@travel.ToString("0.#") viewBox units</em> <small>(blobatar.dev's hero uses 12)</small></span>
+            <input type="range" min="0" max="16" step="1" @bind="travel" @bind:event="oninput" />
+        </label>
+
+        <pre class="snippet">&lt;Blobatar @@ref="hero" Name="@Name" Size="260"
+          Animate="BlobatarAnimation.Always"
+          Gaze="GazeOptions.FollowPointer(@travel.ToString("0.#"))" /&gt;
+
+await hero.LookAtAsync(new GazeElement(inputRef));
+await hero.LookAtAsync(GazeTarget.Rest);</pre>
+    </div>
+</div>
+
+@code {
+    private Blobatar? hero;
+    private ElementReference field;
+    private ElementReference button;
+    private string name = "Crysta";
+    private double travel = 12;
+    private string aim = "pointer";
+
+    private string Name => string.IsNullOrWhiteSpace(name) ? "Crysta" : name;
+
+    private GazeOptions HeroGaze => GazeOptions.FollowPointer(travel);
+
+    private async Task Aim(GazeTarget target, string label)
+    {
+        aim = label;
+        if (hero is not null)
+        {
+            await hero.LookAtAsync(target);
+        }
+    }
+
+    private Task WatchField() => Aim(new GazeElement(field), "field");
+}

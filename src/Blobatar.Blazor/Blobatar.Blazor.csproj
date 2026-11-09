@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>Blobatar.Blazor</RootNamespace>
+    <AssemblyName>Blobatar.Blazor</AssemblyName>
+    <PackageId>Blobatar.Blazor</PackageId>
+    <Title>Blobatar for Blazor</Title>
+    <Description>The &lt;Blobatar&gt; Razor component: deterministic geometric avatars from any string, with optional idle animation, fourteen expressions and a pointer-following gaze. Blazor adapter for the Blobatar library (a port of blobatar.dev).</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsPackable>true</IsPackable>
+    <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Blobatar\Blobatar.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Blobatar.Blazor.Tests" />
+  </ItemGroup>
+
+</Project>

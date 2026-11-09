@@ -1,0 +1,54 @@
+﻿@page "/"
+
+<PageTitle>blobatar for Blazor</PageTitle>
+
+<section class="hero">
+    <div class="hero-copy">
+        <h1>blobatar</h1>
+        <p class="lede">Deterministic geometric blobatars from any string, as a Blazor component. No dependencies, and byte-identical to the original library.</p>
+        <p class="find">
+            <span>Let's find your blobatar</span>
+            <input class="name-input" @bind="name" @bind:event="oninput" placeholder="your name" spellcheck="false" />
+        </p>
+        <pre class="snippet">&lt;Blobatar Name="@HeroName" Size="200" Animate="BlobatarAnimation.Always"
+          Gaze="GazeOptions.FollowPointer(12)" /&gt;</pre>
+        <p class="muted">Every parameter is optional except the name. Leave out <code>Animate</code> and the blobatar renders as a single <code>&lt;img&gt;</code>; leave out <code>Gaze</code> and the eyes stop following your pointer.</p>
+    </div>
+    <div class="hero-face">
+        <Blobatar Name="@HeroName" Size="200" Animate="BlobatarAnimation.Always" Title="@HeroName" Gaze="HeroGaze" />
+    </div>
+</section>
+
+<section>
+    <div class="section-head">
+        <h2>A crowd</h2>
+        <label class="toggle"><input type="checkbox" @bind="animate" /> animate on hover</label>
+    </div>
+    <p class="muted">Every blobatar here is somebody's name, and nobody chose their colour. @(animate ? "Hover one." : "Rendered as plain <img> tags.")</p>
+    <div class="crowd">
+        @foreach (var n in Names)
+        {
+            <Blobatar @key="n" Name="@n" Size="56" Title="@n" Animate="@(animate ? BlobatarAnimation.Hover : BlobatarAnimation.None)" />
+        }
+    </div>
+</section>
+
+@code {
+    // 12 viewBox units is what the hero on blobatar.dev uses: a deliberate look rather than a glance.
+    private static readonly GazeOptions HeroGaze = GazeOptions.FollowPointer(12);
+
+    private static readonly string[] Firsts =
+    [
+        "alain", "ada", "bea", "chen", "dmitri", "esme", "farid", "gus", "hana", "idris", "june", "kofi",
+        "lena", "mateo", "nour", "oona", "priya", "quinn", "rafa", "sofia", "tomas", "uma", "vik", "wren",
+        "xiu", "yara", "zed", "amara", "bo", "cleo",
+    ];
+
+    private static readonly string[] Names =
+        Firsts.SelectMany(f => new[] { f, f + "@example.com", f + "_" + (f.Length * 7 % 90 + 10), "team " + f }).ToArray();
+
+    private string name = "Crysta";
+    private bool animate = true;
+
+    private string HeroName => string.IsNullOrWhiteSpace(name) ? "Crysta" : name;
+}

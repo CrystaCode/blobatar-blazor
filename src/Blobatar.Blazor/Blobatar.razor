@@ -1,0 +1,39 @@
+@namespace Blobatar.Blazor
+
+@if (_parts is { } parts)
+{
+    @* Three real children rather than one markup blob, and the reason is the morph. Only the root group's
+       class and the <svg>'s style vary when the expression changes; the markup inside the group does not, so
+       Blazor diffs it by value and leaves the DOM alone, which is what lets the CSS transition exist at all.
+       The <title> must be the first child to label the <svg>, and the backdrop sits outside the hover lift. *@
+    <svg xmlns="http://www.w3.org/2000/svg"
+         viewBox="0 0 100 100"
+         width="@_sizeAttribute"
+         height="@_sizeAttribute"
+         role="@(_labelled ? "img" : null)"
+         aria-hidden="@(_labelled ? null : "true")"
+         class="@_class"
+         style="@_svgStyle"
+         @attributes="_splat"
+         @ref="_svg">
+        @if (_labelled)
+        {
+            <title>@Title</title>
+        }
+        @if (parts.Backdrop is { } backdrop)
+        {
+            <path d="@backdrop.PathData" fill="@backdrop.Fill" />
+        }
+        <g class="@parts.RootClass">@((MarkupString)parts.Inner)</g>
+    </svg>
+}
+else
+{
+    <img src="@_src"
+         width="@_sizeAttribute"
+         height="@_sizeAttribute"
+         alt="@(Alt ?? Title ?? string.Empty)"
+         class="@_class"
+         style="@_imgStyle"
+         @attributes="_splat" />
+}

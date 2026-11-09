@@ -1,0 +1,233 @@
+@page "/editor"
+
+<PageTitle>Editor</PageTitle>
+
+<h1>Editor</h1>
+<p class="lede">Pin an axis to fix it for everybody; leave it alone and the name decides. Nothing is built here: a blobatar already exists for every name, and this page only decides which axes stop coming from it.</p>
+
+<div class="editor">
+    <div class="editor-preview">
+        <div class="editor-face">
+            <Blobatar Name="@Name"
+                      Size="220"
+                      Animate="animate"
+                      Expression="expression"
+                      Background="background"
+                      BackgroundColor="@(useBackgroundColor ? backgroundColor : null)"
+                      Hue="@(pinHue ? hue : null)"
+                      Tone="@(pinnedTone?.ToPosition())"
+                      Traits="Traits"
+                      Normalize="normalize"
+                      Contrast="contrast"
+                      Title="@Name" />
+        </div>
+        <pre class="snippet">@Snippet</pre>
+        <details>
+            <summary>SVG markup (@Markup.Length bytes)</summary>
+            <pre class="snippet small">@Markup</pre>
+        </details>
+        <details>
+            <summary>Resolved layout</summary>
+            <pre class="snippet small">shape: @Layout.Shape.ToName()
+body: cx @F(Layout.Body.Cx) cy @F(Layout.Body.Cy) rx @F(Layout.Body.Rx) ry @F(Layout.Body.Ry) n @F(Layout.Body.Squareness) rot @F(Layout.Body.Rotation)
+eyes: @string.Join(" | ", Layout.Eyes.Select(e => $"cx {F(e.Cx)} cy {F(e.Cy)} rx {F(e.Rx)} ry {F(e.Ry)} rot {F(e.Rotation)}"))
+palette: bg @Layout.Palette.Background head @Layout.Palette.Head eye @Layout.Palette.Eye</pre>
+        </details>
+    </div>
+
+    <div class="editor-controls">
+        <label class="field"><span>name</span><input @bind="name" @bind:event="oninput" spellcheck="false" /></label>
+
+        <div class="field">
+            <span>motion</span>
+            <div class="chips">
+                @foreach (var a in Enum.GetValues<BlobatarAnimation>())
+                {
+                    <button class="chip @(animate == a ? "on" : null)" @onclick="() => animate = a">@(a.ToName() ?? "none")</button>
+                }
+            </div>
+        </div>
+
+        <label class="field">
+            <span>expression</span>
+            <select @bind="expression">
+                @foreach (var e in Enum.GetValues<BlobatarExpression>())
+                {
+                    <option value="@e">@e.ToName()</option>
+                }
+            </select>
+        </label>
+
+        <div class="field">
+            <span>background</span>
+            <div class="chips">
+                @foreach (var b in Enum.GetValues<BlobatarBackground>())
+                {
+                    <button class="chip @(background == b ? "on" : null)" @onclick="() => background = b">@b.ToName()</button>
+                }
+            </div>
+            <label class="inline"><input type="checkbox" @bind="useBackgroundColor" /> plate colour <input type="color" @bind="backgroundColor" @bind:event="oninput" disabled="@(!useBackgroundColor)" /></label>
+        </div>
+
+        <div class="field">
+            <span>shape <small>(narrow to any of these)</small></span>
+            <div class="chips">
+                <button class="chip @(shapes.Count == 0 ? "on" : null)" @onclick="shapes.Clear">auto</button>
+                @foreach (var s in Enum.GetValues<BlobatarShape>())
+                {
+                    <button class="chip @(shapes.Contains(s) ? "on" : null)" @onclick="() => ToggleShape(s)">@s.ToName()</button>
+                }
+            </div>
+        </div>
+
+        <div class="field">
+            <span>tone</span>
+            <div class="chips">
+                <button class="chip @(pinnedTone is null ? "on" : null)" @onclick="() => pinnedTone = null">auto</button>
+                @foreach (var t in Enum.GetValues<BlobatarTone>())
+                {
+                    <button class="chip @(pinnedTone == t ? "on" : null)" @onclick="() => pinnedTone = t">@t.ToName()</button>
+                }
+            </div>
+        </div>
+
+        <label class="field slider">
+            <span><input type="checkbox" @bind="pinHue" /> hue <em>@(pinHue ? hue.ToString("0") : "auto")</em></span>
+            <input type="range" min="0" max="360" step="1" @bind="hue" @bind:event="oninput" disabled="@(!pinHue)" />
+        </label>
+
+        @foreach (var axis in Axes)
+        {
+            <label class="field slider" @key="axis.Key">
+                <span><input type="checkbox" checked="@axis.Pinned" @onchange="e => axis.Pinned = (bool)e.Value!" /> @axis.Label <small>@axis.Key</small> <em>@(axis.Pinned ? axis.Value.ToString("0.000") : "auto")</em></span>
+                <input type="range" min="0" max="0.999" step="0.001" value="@axis.Value" @oninput="e => axis.Value = double.Parse((string)e.Value!, System.Globalization.CultureInfo.InvariantCulture)" disabled="@(!axis.Pinned)" />
+            </label>
+        }
+
+        <label class="inline"><input type="checkbox" @bind="normalize" /> normalize the name (NFC, trim, lowercase)</label>
+        <label class="inline"><input type="checkbox" @bind="contrast" /> enforce contrast floors</label>
+    </div>
+</div>
+
+@code {
+    private sealed class Axis(string key, string label)
+    {
+        public string Key { get; } = key;
+        public string Label { get; } = label;
+        public bool Pinned { get; set; }
+        public double Value { get; set; } = 0.5;
+    }
+
+    private static readonly Axis[] Axes =
+    [
+        new(BlobatarTraitKey.BodyRadius, "body size"),
+        new(BlobatarTraitKey.BodyRatio, "body proportion"),
+        new(BlobatarTraitKey.BodySquareness, "body squareness"),
+        new(BlobatarTraitKey.EyeRadius, "eye size"),
+        new(BlobatarTraitKey.EyeRatio, "eye roundness"),
+        new(BlobatarTraitKey.EyeGap, "eye separation"),
+        new(BlobatarTraitKey.EyeLean, "eye lean"),
+        new(BlobatarTraitKey.GazeX, "gaze x"),
+        new(BlobatarTraitKey.GazeY, "gaze y"),
+    ];
+
+    private string name = "Crysta";
+    private BlobatarAnimation animate = BlobatarAnimation.Hover;
+    private BlobatarExpression expression;
+    private BlobatarBackground background;
+    private bool useBackgroundColor;
+    private string backgroundColor = "#fef3c7";
+    private bool pinHue;
+    private double hue = 200;
+    private BlobatarTone? pinnedTone;
+    private readonly HashSet<BlobatarShape> shapes = [];
+    private bool normalize = true;
+    private bool contrast = true;
+
+    private string Name => string.IsNullOrWhiteSpace(name) ? "Crysta" : name;
+
+    private BlobatarTraits? Traits
+    {
+        get
+        {
+            var traits = new BlobatarTraits();
+            if (shapes.Count > 0)
+            {
+                traits.NarrowShapes(shapes.OrderBy(s => s).ToArray());
+            }
+
+            foreach (var axis in Axes.Where(a => a.Pinned))
+            {
+                traits.Pin(axis.Key, axis.Value);
+            }
+
+            return traits.Count == 0 ? null : traits;
+        }
+    }
+
+    private BlobatarOptions Options => new()
+    {
+        Size = 220,
+        Expression = expression,
+        Background = background,
+        BackgroundColor = useBackgroundColor ? backgroundColor : null,
+        Hue = pinHue ? hue : null,
+        Tone = pinnedTone?.ToPosition(),
+        Traits = Traits,
+        Normalize = normalize,
+        Contrast = contrast,
+        Title = Name,
+    };
+
+    private string Markup => BlobatarRenderer.Render(Name, Options);
+
+    private BlobatarLayout Layout => BlobatarRenderer.Layout(Name, Options);
+
+    private void ToggleShape(BlobatarShape s)
+    {
+        if (!shapes.Remove(s))
+        {
+            shapes.Add(s);
+        }
+    }
+
+    private static string F(double v) => v.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string Snippet
+    {
+        get
+        {
+            var lines = new List<string>();
+            var traits = Traits;
+            if (traits is not null)
+            {
+                var calls = new List<string>();
+                if (shapes.Count > 0)
+                {
+                    calls.Add($".NarrowShapes({string.Join(", ", shapes.OrderBy(s => s).Select(s => "BlobatarShape." + s))})");
+                }
+
+                foreach (var axis in Axes.Where(a => a.Pinned))
+                {
+                    calls.Add($".Pin(\"{axis.Key}\", {axis.Value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)})");
+                }
+
+                lines.Add("var traits = new BlobatarTraits()" + string.Concat(calls) + ";");
+                lines.Add(string.Empty);
+            }
+
+            var attrs = new List<string> { $"Name=\"{Name}\"", "Size=\"220\"" };
+            if (animate != BlobatarAnimation.None) attrs.Add($"Animate=\"BlobatarAnimation.{animate}\"");
+            if (expression != BlobatarExpression.Idle) attrs.Add($"Expression=\"BlobatarExpression.{expression}\"");
+            if (background != BlobatarBackground.None) attrs.Add($"Background=\"BlobatarBackground.{background}\"");
+            if (useBackgroundColor && background != BlobatarBackground.None) attrs.Add($"BackgroundColor=\"{backgroundColor}\"");
+            if (pinHue) attrs.Add($"Hue=\"{hue.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}\"");
+            if (pinnedTone is { } t) attrs.Add($"Tone=\"BlobatarTone.{t}.ToPosition()\"");
+            if (traits is not null) attrs.Add("Traits=\"traits\"");
+            if (!normalize) attrs.Add("Normalize=\"false\"");
+            if (!contrast) attrs.Add("Contrast=\"false\"");
+            lines.Add("<Blobatar " + string.Join("\n          ", attrs) + " />");
+            return string.Join("\n", lines);
+        }
+    }
+}
