@@ -1,0 +1,26 @@
+## .NET build output
+bin/
+obj/
+artifacts/
+*.nupkg
+*.snupkg
+TestResults/
+
+## IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.swp
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Local tooling
+*.log
+.claude/*
+!.claude/launch.json

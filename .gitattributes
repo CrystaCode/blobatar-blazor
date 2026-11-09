@@ -1,0 +1,8 @@
+# Normalize line endings for source; keep upstream fixtures and assets byte-exact.
+* text=auto eol=lf
+tests/Blobatar.Tests/Fixtures/** -text
+src/Blobatar.Blazor/wwwroot/motion.css -text
+src/Blobatar.Blazor/wwwroot/gaze.css -text
+src/Blobatar.Blazor/wwwroot/gaze.js -text
+*.png binary
+*.ico binary
